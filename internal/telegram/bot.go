@@ -35,16 +35,7 @@ func (b *Bot) initUpdatesChannel() tgbotapi.UpdatesChannel {
 }
 
 func (b *Bot) handleUpdates(ctx context.Context, updates tgbotapi.UpdatesChannel) {
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		if update.Message.IsCommand() {
-			b.handleCommand(ctx, update.Message)
-			continue
-		}
-
-		b.handleMessage(update.Message)
+	for u := range updates {
+		b.fetchUpdate(ctx, u)
 	}
 }

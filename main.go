@@ -3,27 +3,23 @@ package main
 import (
 	"context"
 	"log"
+	"main/internal/config"
 	"main/internal/storage/postgres"
 	"main/internal/telegram"
-	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error with .env load: ", err)
-	}
+	cfg := config.New()
 
 	// database
 	dbConfig := postgres.Config{
-		Username: os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Host:     os.Getenv("DB_HOST"),
-		Port:     os.Getenv("DB_PORT"),
-		Database: os.Getenv("DB_NAME"),
+		Username: cfg.DB.User,
+		Password: cfg.DB.Password,
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		Database: cfg.DB.Name,
 	}
 	pgClient, err := postgres.NewClient(context.TODO(), dbConfig, 3)
 	if err != nil {
@@ -32,7 +28,7 @@ func main() {
 	repo := postgres.NewRepository(pgClient)
 
 	// telegram
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_BOT_TOKEN"))
+	bot, err := tgbotapi.NewBotAPI(cfg.TelegramBotToken)
 	if err != nil {
 		log.Fatal(err)
 	}

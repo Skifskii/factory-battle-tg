@@ -2,5 +2,7 @@ package domain
 
 type Player struct {
 	User
-	Scores int64
+	ID    int64
+	Room  Room
+	Score int64
 }

@@ -1,7 +1,7 @@
 package domain
 
 type Room struct {
-	ID      int64
-	Leader  User
-	Players []User
+	ID           int64
+	Leader       User
+	CurrentRound int64
 }
