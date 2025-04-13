@@ -2,12 +2,12 @@ package domain
 
 type Room struct {
 	ID           int64
-	Leader       User
+	LeaderID     int64
 	CurrentRound int64
 }
 
-func NewRoom(leader User) Room {
+func NewRoom(leaderID int64) Room {
 	return Room{
-		Leader: leader,
+		LeaderID: leaderID,
 	}
 }

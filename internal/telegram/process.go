@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"main/internal/domain"
+	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -12,6 +13,10 @@ import (
 const alreadyRegisteredAns = "Вы уже зарегистрированы!"
 const successfullyRegisteredAns = "Вы успешно зарегистрированы!"
 const successfullyCreatedRoomAns = "Комната создана! Ее ID = %d"
+
+const unknownRoomID = "Комнаты с ID=%d не существует :("
+const alreadyInRoom = "Вы уже находитесь в этой комнате!"
+const successfullyJoinedRoomAns = "Теперь вы находитесь в комнате с ID = %d!"
 
 const unknownCommandAns = "Я не знаю такую команду"
 
@@ -21,6 +26,8 @@ func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
 		return b.processStartCommand(ctx, msg)
 	case "create_room":
 		return b.processCreateRoomCommand(ctx, msg)
+	case "join_room":
+		return b.processJoinRoomCommand(ctx, msg)
 	default:
 		return b.processUnknownCommand(msg)
 	}
@@ -52,7 +59,13 @@ func (b *Bot) processStartCommand(ctx context.Context, msg *tgbotapi.Message) er
 }
 
 func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	roomID, err := b.storage.AddRoom(ctx, domain.NewRoom(domain.NewUser(msg.Chat.ID)))
+	roomID, err := b.storage.AddRoom(ctx, domain.NewRoom(msg.Chat.ID))
+	if err != nil {
+		return err
+	}
+
+	// create Player and add to Room
+	_, err = b.storage.AddPlayer(ctx, domain.NewPlayer(0, msg.Chat.ID, roomID))
 	if err != nil {
 		return err
 	}
@@ -62,7 +75,51 @@ func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Messag
 	return err
 }
 
+func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
+	roomID, err := parseInt64(msg.CommandArguments())
+	if err != nil {
+		return err
+	}
+
+	// search for a room
+	roomExists, err := b.storage.IsRoomExists(ctx, roomID)
+	if err != nil {
+		return err
+	}
+	if !roomExists {
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(unknownRoomID, roomID)))
+		return err
+	}
+
+	// create Player and add to Room
+	var inRoom bool
+	inRoom, err = b.storage.IsUserInRoom(ctx, msg.Chat.ID, roomID)
+	if err != nil {
+		return err
+	}
+	if inRoom {
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, alreadyInRoom))
+		return err
+	}
+
+	_, err = b.storage.AddPlayer(ctx, domain.NewPlayer(0, msg.Chat.ID, roomID))
+	if err != nil {
+		return err
+	}
+
+	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
+
+	return err
+}
+
 func (b *Bot) processUnknownCommand(msg *tgbotapi.Message) error {
 	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, unknownCommandAns))
 	return err
+}
+
+// parseInt64 attempts to parse a string to int64
+// Returns the parsed value and nil error if successful
+// Returns 0 and error if parsing fails
+func parseInt64(s string) (int64, error) {
+	return strconv.ParseInt(s, 10, 64)
 }

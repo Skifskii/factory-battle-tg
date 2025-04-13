@@ -19,7 +19,7 @@ func (r *Repository) AddUser(ctx context.Context, u domain.User) error {
 
 // GetUser returns a user by id.
 func (r *Repository) GetUser(ctx context.Context, id int64) (domain.User, error) {
-	q := `SELECT id, user_name FROM users WHERE user_id = $1`
+	q := `SELECT user_id, user_name FROM users WHERE user_id = $1`
 
 	var u domain.User
 	if err := r.Client.QueryRow(ctx, q, id).Scan(&u.ID, &u.Name); err != nil {
