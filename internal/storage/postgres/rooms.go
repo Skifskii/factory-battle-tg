@@ -28,3 +28,22 @@ func (r *Repository) IsRoomExists(ctx context.Context, id int64) (bool, error) {
 
 	return count > 0, nil
 }
+
+// GetUserActiveRoom checks if the user is in active rooms.
+func (r *Repository) GetUserActiveRoom(ctx context.Context, id int64) (int64, error) {
+	q := `
+	SELECT r.room_id
+	FROM rooms r
+	JOIN players rp ON r.room_id = rp.room_id
+	WHERE rp.user_id = $1
+	AND r.winner_id = 0
+	LIMIT 1;
+	`
+
+	var roomID int64
+	if err := r.Client.QueryRow(ctx, q, id).Scan(&roomID); err != nil {
+		return 0, err
+	}
+
+	return roomID, nil
+}

@@ -3,7 +3,8 @@
 CREATE TABLE rooms (
     room_id SERIAL PRIMARY KEY,
     leader INTEGER REFERENCES users(user_id) NOT NULL,
-    current_round INTEGER DEFAULT 0
+    current_round INTEGER DEFAULT 0,
+    winner_id INTEGER DEFAULT 0
 );
 -- +goose StatementEnd
 

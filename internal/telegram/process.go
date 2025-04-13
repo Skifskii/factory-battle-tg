@@ -15,6 +15,7 @@ const successfullyRegisteredAns = "Вы успешно зарегистриро�
 const successfullyCreatedRoomAns = "Комната создана! Ее ID = %d"
 
 const unknownRoomID = "Комнаты с ID=%d не существует :("
+const alreadyInAnotherRoom = "Вы не можете присоединиться к другой комнате. Сейчас вы находитесь в комнате с ID = %d"
 const alreadyInRoom = "Вы уже находитесь в этой комнате!"
 const successfullyJoinedRoomAns = "Теперь вы находитесь в комнате с ID = %d!"
 
@@ -59,7 +60,17 @@ func (b *Bot) processStartCommand(ctx context.Context, msg *tgbotapi.Message) er
 }
 
 func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	roomID, err := b.storage.AddRoom(ctx, domain.NewRoom(msg.Chat.ID))
+	// reject if the user is in another room
+	roomID, err := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
+	if err != nil {
+		return err
+	}
+	if roomID != 0 {
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
+		return err
+	}
+
+	roomID, err = b.storage.AddRoom(ctx, domain.NewRoom(msg.Chat.ID))
 	if err != nil {
 		return err
 	}
@@ -76,7 +87,17 @@ func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Messag
 }
 
 func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	roomID, err := parseInt64(msg.CommandArguments())
+	// reject if the user is in another room
+	roomID, err := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
+	if err != nil {
+		return err
+	}
+	if roomID != 0 {
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
+		return err
+	}
+
+	roomID, err = parseInt64(msg.CommandArguments())
 	if err != nil {
 		return err
 	}
