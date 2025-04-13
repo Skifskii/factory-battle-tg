@@ -5,3 +5,9 @@ type Room struct {
 	Leader       User
 	CurrentRound int64
 }
+
+func NewRoom(leader User) Room {
+	return Room{
+		Leader: leader,
+	}
+}

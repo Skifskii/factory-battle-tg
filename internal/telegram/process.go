@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"main/internal/domain"
 
@@ -10,6 +11,8 @@ import (
 
 const alreadyRegisteredAns = "Вы уже зарегистрированы!"
 const successfullyRegisteredAns = "Вы успешно зарегистрированы!"
+const successfullyCreatedRoomAns = "Комната создана! Ее ID = %d"
+
 const unknownCommandAns = "Я не знаю такую команду"
 
 func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
@@ -17,8 +20,7 @@ func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
 	case "start":
 		return b.processStartCommand(ctx, msg)
 	case "create_room":
-		return nil
-		// return b.processCreateRoomCommand(ctx, msg)
+		return b.processCreateRoomCommand(ctx, msg)
 	default:
 		return b.processUnknownCommand(msg)
 	}
@@ -29,7 +31,7 @@ func (b *Bot) processMessage(message *tgbotapi.Message) {
 }
 
 func (b *Bot) processStartCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	exists, err := b.storage.IsExists(ctx, msg.Chat.ID)
+	exists, err := b.storage.IsUserExists(ctx, msg.Chat.ID)
 	if err != nil {
 		return err
 	}
@@ -49,9 +51,16 @@ func (b *Bot) processStartCommand(ctx context.Context, msg *tgbotapi.Message) er
 	return err
 }
 
-// func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
+func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
+	roomID, err := b.storage.AddRoom(ctx, domain.NewRoom(domain.NewUser(msg.Chat.ID)))
+	if err != nil {
+		return err
+	}
 
-// }
+	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyCreatedRoomAns, roomID)))
+
+	return err
+}
 
 func (b *Bot) processUnknownCommand(msg *tgbotapi.Message) error {
 	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, unknownCommandAns))

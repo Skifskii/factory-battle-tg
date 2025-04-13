@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"main/internal/domain"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -57,42 +56,6 @@ func NewClient(ctx context.Context, cfg Config, maxAttempts int64) (pool *pgxpoo
 	}
 
 	return pool, nil
-}
-
-// ToDo: protect from SQL injection.
-// AddUser adds a new user to the database.
-func (r *Repository) AddUser(ctx context.Context, u domain.User) error {
-	q := `INSERT INTO users (user_id) VALUES($1)`
-
-	if _, err := r.Client.Exec(ctx, q, u.ID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// GetUser returns a user by id.
-func (r *Repository) GetUser(ctx context.Context, id int64) (domain.User, error) {
-	q := `SELECT id, user_name FROM users WHERE user_id = $1`
-
-	var u domain.User
-	if err := r.Client.QueryRow(ctx, q, id).Scan(&u.ID, &u.Name); err != nil {
-		return domain.User{}, err
-	}
-
-	return u, nil
-}
-
-// IsExists checks if user exists in database.
-func (r *Repository) IsExists(ctx context.Context, id int64) (bool, error) {
-	q := `SELECT COUNT(*) FROM users WHERE user_id = $1`
-
-	var count int64
-	if err := r.Client.QueryRow(ctx, q, id).Scan(&count); err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
 }
 
 func doWithTries(fn func() error, attemtps int64, delay time.Duration) (err error) {
