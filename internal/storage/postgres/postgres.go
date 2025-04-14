@@ -33,6 +33,7 @@ func NewRepository(client Client) *Repository {
 type Client interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 }
 
 // NewClient returns a new Client.

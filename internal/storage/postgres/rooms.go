@@ -47,3 +47,30 @@ func (r *Repository) GetUserActiveRoom(ctx context.Context, id int64) (int64, er
 
 	return roomID, nil
 }
+
+// GetUserActiveRoom checks if the user is in active rooms.
+func (r *Repository) GetWaitingRoomByLeaderID(ctx context.Context, id int64) (int64, error) {
+	q := `
+	SELECT room_id
+	FROM rooms
+	WHERE leader = $1 AND winner_id = 0 AND current_round = 0
+	LIMIT 1;
+	`
+
+	var roomID int64
+	if err := r.Client.QueryRow(ctx, q, id).Scan(&roomID); err != nil {
+		return 0, err
+	}
+
+	return roomID, nil
+}
+
+// GetUserActiveRoom checks if the user is in active rooms.
+func (r *Repository) IncrementCurrentRound(ctx context.Context, roomID int64) error {
+	q := `UPDATE rooms SET current_round = current_round + 1 WHERE room_id = $1`
+	if _, err := r.Client.Exec(ctx, q, roomID); err != nil {
+		return err
+	}
+
+	return nil
+}

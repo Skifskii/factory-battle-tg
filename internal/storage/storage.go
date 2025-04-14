@@ -15,4 +15,7 @@ type Storage interface {
 	GetPlayer(ctx context.Context, id int64) (domain.Player, error)
 	IsUserInRoom(ctx context.Context, userID, roomID int64) (bool, error)
 	GetUserActiveRoom(ctx context.Context, userID int64) (int64, error)
+	GetWaitingRoomByLeaderID(ctx context.Context, id int64) (int64, error)
+	GetUsersByRoomID(ctx context.Context, id int64) ([]domain.User, error)
+	IncrementCurrentRound(ctx context.Context, roomID int64) error
 }

@@ -19,6 +19,8 @@ const alreadyInAnotherRoom = "Вы не можете присоединитьс�
 const alreadyInRoom = "Вы уже находитесь в этой комнате!"
 const successfullyJoinedRoomAns = "Теперь вы находитесь в комнате с ID = %d!"
 
+const gameStartedNotification = "Игра началась! Вы находитесь в комнате с ID = %d.\n\nХод номер 1."
+
 const unknownCommandAns = "Я не знаю такую команду"
 
 func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
@@ -29,6 +31,8 @@ func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
 		return b.processCreateRoomCommand(ctx, msg)
 	case "join_room":
 		return b.processJoinRoomCommand(ctx, msg)
+	case "start_game":
+		return b.processStartGameCommand(ctx, msg)
 	default:
 		return b.processUnknownCommand(msg)
 	}
@@ -88,16 +92,13 @@ func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Messag
 
 func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
 	// reject if the user is in another room
-	roomID, err := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
-	if err != nil {
-		return err
-	}
+	roomID, _ := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
 	if roomID != 0 {
-		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
+		_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
 		return err
 	}
 
-	roomID, err = parseInt64(msg.CommandArguments())
+	roomID, err := parseInt64(msg.CommandArguments())
 	if err != nil {
 		return err
 	}
@@ -131,6 +132,26 @@ func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message)
 	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
 
 	return err
+}
+
+func (b *Bot) processStartGameCommand(ctx context.Context, msg *tgbotapi.Message) error {
+	roomID, err := b.storage.GetWaitingRoomByLeaderID(ctx, msg.Chat.ID)
+	if err != nil {
+		return err
+	}
+
+	users, err := b.storage.GetUsersByRoomID(ctx, roomID)
+	if err != nil {
+		return err
+	}
+	for _, user := range users {
+		_, err = b.bot.Send(tgbotapi.NewMessage(user.ID, fmt.Sprintf(gameStartedNotification, roomID)))
+		if err != nil {
+			return err
+		}
+	}
+
+	return b.storage.IncrementCurrentRound(ctx, roomID)
 }
 
 func (b *Bot) processUnknownCommand(msg *tgbotapi.Message) error {

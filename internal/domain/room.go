@@ -4,6 +4,7 @@ type Room struct {
 	ID           int64
 	LeaderID     int64
 	CurrentRound int64
+	WinnerID     int64
 }
 
 func NewRoom(leaderID int64) Room {
