@@ -2,11 +2,12 @@ package telegram
 
 import (
 	"context"
+	"main/internal/game/domain"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *Bot) fetchUpdate(ctx context.Context, upd tgbotapi.Update) {
+func (b *Bot) fetchUpdate(ctx context.Context, upd tgbotapi.Update, nCh chan domain.Notification) {
 	// not a message
 	if upd.Message == nil {
 		return
@@ -14,7 +15,7 @@ func (b *Bot) fetchUpdate(ctx context.Context, upd tgbotapi.Update) {
 
 	// command
 	if upd.Message.IsCommand() {
-		b.processCommand(ctx, upd.Message)
+		b.processCommand(ctx, upd.Message, nCh)
 		return
 	}
 

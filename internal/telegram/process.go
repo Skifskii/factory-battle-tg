@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"main/internal/domain"
+	"main/internal/game/domain"
 	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -23,7 +23,7 @@ const gameStartedNotification = "Игра началась! Вы находит�
 
 const unknownCommandAns = "Я не знаю такую команду"
 
-func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
+func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message, nCh chan domain.Notification) error {
 	switch msg.Command() {
 	case "start":
 		return b.processStartCommand(ctx, msg)
@@ -32,7 +32,9 @@ func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message) error {
 	case "join_room":
 		return b.processJoinRoomCommand(ctx, msg)
 	case "start_game":
-		return b.processStartGameCommand(ctx, msg)
+		return b.processStartGameCommand(ctx, msg, nCh)
+	case "move":
+		return b.processMoveCommand(ctx, msg)
 	default:
 		return b.processUnknownCommand(msg)
 	}
@@ -43,115 +45,63 @@ func (b *Bot) processMessage(message *tgbotapi.Message) {
 }
 
 func (b *Bot) processStartCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	exists, err := b.storage.IsUserExists(ctx, msg.Chat.ID)
-	if err != nil {
-		return err
-	}
-
-	// already registered
-	if exists {
-		_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, alreadyRegisteredAns))
-		return err
-	}
-
-	// new user
-	if err := b.storage.AddUser(ctx, domain.NewUser(msg.Chat.ID)); err != nil {
-		return err
-	}
-	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, successfullyRegisteredAns))
+	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, successfullyRegisteredAns))
 
 	return err
 }
 
 func (b *Bot) processCreateRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	// reject if the user is in another room
-	roomID, err := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
-	if err != nil {
-		return err
-	}
-	if roomID != 0 {
-		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
-		return err
-	}
-
-	roomID, err = b.storage.AddRoom(ctx, domain.NewRoom(msg.Chat.ID))
-	if err != nil {
-		return err
-	}
-
-	// create Player and add to Room
-	_, err = b.storage.AddPlayer(ctx, domain.NewPlayer(0, msg.Chat.ID, roomID))
+	roomID, err := b.gm.AddRoom(msg.Chat.ID)
 	if err != nil {
 		return err
 	}
 
 	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyCreatedRoomAns, roomID)))
-
 	return err
 }
 
 func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	// reject if the user is in another room
-	roomID, _ := b.storage.GetUserActiveRoom(ctx, msg.Chat.ID)
-	if roomID != 0 {
-		_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(alreadyInAnotherRoom, roomID)))
-		return err
-	}
-
 	roomID, err := parseInt64(msg.CommandArguments())
 	if err != nil {
 		return err
 	}
 
-	// search for a room
-	roomExists, err := b.storage.IsRoomExists(ctx, roomID)
-	if err != nil {
-		return err
-	}
-	if !roomExists {
-		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(unknownRoomID, roomID)))
-		return err
-	}
-
-	// create Player and add to Room
-	var inRoom bool
-	inRoom, err = b.storage.IsUserInRoom(ctx, msg.Chat.ID, roomID)
-	if err != nil {
-		return err
-	}
-	if inRoom {
-		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, alreadyInRoom))
-		return err
-	}
-
-	_, err = b.storage.AddPlayer(ctx, domain.NewPlayer(0, msg.Chat.ID, roomID))
-	if err != nil {
+	if err = b.gm.AddPlayerToRoom(msg.Chat.ID, roomID); err != nil {
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "не удается подключиться к комнате"))
 		return err
 	}
 
 	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
-
 	return err
 }
 
-func (b *Bot) processStartGameCommand(ctx context.Context, msg *tgbotapi.Message) error {
-	roomID, err := b.storage.GetWaitingRoomByLeaderID(ctx, msg.Chat.ID)
-	if err != nil {
+func (b *Bot) processStartGameCommand(ctx context.Context, msg *tgbotapi.Message, nCh chan domain.Notification) error {
+	roomID, exists := b.gm.RoomIDByPlayerID[msg.From.ID]
+	if !exists {
+		_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "вы не находитесь в комнате"))
 		return err
 	}
 
-	users, err := b.storage.GetUsersByRoomID(ctx, roomID)
-	if err != nil {
+	if err := b.gm.StartGame(roomID, msg.Chat.ID, nCh); err != nil {
 		return err
 	}
-	for _, user := range users {
-		_, err = b.bot.Send(tgbotapi.NewMessage(user.ID, fmt.Sprintf(gameStartedNotification, roomID)))
-		if err != nil {
-			return err
-		}
+
+	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "игра началась! 1 раунд"))
+	return err
+}
+
+func (b *Bot) processMoveCommand(ctx context.Context, msg *tgbotapi.Message) error {
+	cardName := msg.CommandArguments()
+
+	roomID := b.gm.RoomIDByPlayerID[msg.Chat.ID]
+	rm := b.gm.Rooms[roomID]
+
+	if err := rm.ProcessMove(msg.Chat.ID, cardName); err != nil {
+		return nil
 	}
 
-	return b.storage.IncrementCurrentRound(ctx, roomID)
+	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "ход записан"))
+	return err
 }
 
 func (b *Bot) processUnknownCommand(msg *tgbotapi.Message) error {
