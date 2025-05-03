@@ -1,8 +1,11 @@
+// Package game provides game management functionality including game rooms,
+// player management, and game session control.
 package game
 
 import (
 	"errors"
-	"main/internal/game/domain"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 )
 
 // type RoomManager interface {

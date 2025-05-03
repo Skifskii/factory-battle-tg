@@ -1,8 +1,10 @@
+// Package storage defines interfaces and implementations for data storage,
+// including user, room, and player management.
 package storage
 
 // import (
 // 	"context"
-// 	"main/internal/game/domain"
+// 	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 // )
 
 // type Storage interface {

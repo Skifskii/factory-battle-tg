@@ -7,6 +7,7 @@ const (
 	CardDecrease CardName = "dec"
 )
 
+// Move - ход.
 type Move struct {
 	PlayerID int64
 	CardName CardName

@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"main/internal/game/domain"
 	"strconv"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

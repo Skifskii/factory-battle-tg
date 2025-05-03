@@ -1,6 +1,8 @@
-module main
+module github.com/Skifskii/factory-battle-tg
 
-go 1.22.3
+go 1.23.0
+
+toolchain go1.23.8
 
 require github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 
@@ -15,7 +17,10 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/yuin/goldmark v1.4.13 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/mod v0.24.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/tools v0.32.0 // indirect
 )

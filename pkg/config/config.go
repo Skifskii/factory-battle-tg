@@ -1,3 +1,5 @@
+// Package config provides configuration loading from environment variables,
+// including Telegram bot token and database credentials.
 package config
 
 import (

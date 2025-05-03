@@ -1,10 +1,15 @@
+// Package main is the entry point of the application. It initializes configuration,
+// sets up the Telegram bot, creates the game manager, and starts the Telegram bot.
 package main
 
 import (
 	"log"
-	"main/internal/config"
-	"main/internal/game"
-	"main/internal/telegram"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/telegram"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/config"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

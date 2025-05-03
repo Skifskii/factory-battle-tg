@@ -2,7 +2,8 @@ package telegram
 
 import (
 	"context"
-	"main/internal/game/domain"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

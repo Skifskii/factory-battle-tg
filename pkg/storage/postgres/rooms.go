@@ -2,7 +2,7 @@ package postgres
 
 // import (
 // 	"context"
-// 	"main/internal/game/domain"
+// 	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 // )
 
 // // ToDo: protect from SQL injection.

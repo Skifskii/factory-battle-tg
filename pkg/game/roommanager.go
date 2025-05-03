@@ -3,8 +3,9 @@ package game
 import (
 	"errors"
 	"fmt"
-	"main/internal/game/domain"
 	"strings"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 )
 
 type RoomManager struct {

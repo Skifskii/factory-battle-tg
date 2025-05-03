@@ -1,10 +1,13 @@
+// Package telegram provides Telegram bot integration, handling updates,
+// notifications, and interaction with the game manager.
 package telegram
 
 import (
 	"context"
 	"log"
-	"main/internal/game"
-	"main/internal/game/domain"
+
+	"github.com/Skifskii/factory-battle-tg/pkg/game"
+	"github.com/Skifskii/factory-battle-tg/pkg/game/domain"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

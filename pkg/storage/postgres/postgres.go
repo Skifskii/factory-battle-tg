@@ -1,3 +1,5 @@
+// Package postgres provides PostgreSQL database configuration,
+// repository, and client setup for data persistence.
 package postgres
 
 // import (
