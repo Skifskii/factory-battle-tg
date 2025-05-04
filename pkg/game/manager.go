@@ -87,6 +87,7 @@ func (gm *GameManager) generateRoomID() (int64, error) {
 		if _, exists := gm.Rooms[id]; !exists {
 			return id, nil
 		}
+		id++
 	}
 
 	return 0, errors.New("can't generate room id")

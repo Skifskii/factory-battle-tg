@@ -89,8 +89,8 @@ func (b *Bot) processStartGameCommand(ctx context.Context, msg *tgbotapi.Message
 		return err
 	}
 
-	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "игра началась! 1 раунд"))
-	return err
+	// _, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "игра началась! 1 раунд"))
+	return nil
 }
 
 func (b *Bot) processMoveCommand(ctx context.Context, msg *tgbotapi.Message) error {

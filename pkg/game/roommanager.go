@@ -30,6 +30,13 @@ func (rm *RoomManager) AddPlayer(p *domain.Player) error {
 }
 
 func (rm *RoomManager) ProcessSession(nCh chan domain.Notification) {
+	for _, p := range rm.Room.Players {
+		nCh <- domain.Notification{
+			ToPlayer: *p,
+			Text:     fmt.Sprintf("Игра в комнате %d началась\\! Сделайте первый ход", rm.Room.ID),
+		}
+	}
+
 	rm.Room.Status = domain.StatusPlaying
 	rm.Room.CurrentRound = 1
 
@@ -59,6 +66,11 @@ func (rm *RoomManager) determineWinners(nCh chan domain.Notification) {
 				ToPlayer: *player,
 				Text:     fmt.Sprintf("Поздравляем\\! Вы выиграли с %d очками\\!", player.Score),
 			}
+		} else {
+			nCh <- domain.Notification{
+				ToPlayer: *player,
+				Text:     "GAME OVER\\!",
+			}
 		}
 	}
 }
@@ -67,6 +79,8 @@ func (rm *RoomManager) ProcessMove(playerID int64, cardName string) error {
 	if rm.Room.Status != domain.StatusPlaying {
 		return errors.New("game is not running")
 	}
+
+	// ToDo: добавить проверку того, что игрок еще не ходил. Каждый игрок может походить только один раз за раунд
 
 	m := domain.Move{PlayerID: playerID}
 

@@ -49,9 +49,18 @@ func (b *Bot) handleUpdates(ctx context.Context, updates tgbotapi.UpdatesChannel
 }
 
 func (b *Bot) handleNotifications(ctx context.Context, nCh chan domain.Notification) {
+	var numericKeyboard = tgbotapi.NewReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("/move inc"),
+			tgbotapi.NewKeyboardButton("/move dec"),
+		),
+	)
+
 	for n := range nCh {
 		msg := tgbotapi.NewMessage(n.ToPlayer.ID, n.Text)
 		msg.ParseMode = "MarkdownV2"
+		msg.ReplyMarkup = numericKeyboard
+
 		b.bot.Send(msg)
 	}
 }
