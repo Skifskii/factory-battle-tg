@@ -50,6 +50,8 @@ func (b *Bot) handleUpdates(ctx context.Context, updates tgbotapi.UpdatesChannel
 
 func (b *Bot) handleNotifications(ctx context.Context, nCh chan domain.Notification) {
 	for n := range nCh {
-		b.bot.Send(tgbotapi.NewMessage(n.ToPlayer.ID, n.Text))
+		msg := tgbotapi.NewMessage(n.ToPlayer.ID, n.Text)
+		msg.ParseMode = "MarkdownV2"
+		b.bot.Send(msg)
 	}
 }

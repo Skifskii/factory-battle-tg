@@ -37,7 +37,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot.Debug = true
+	bot.Debug = false
 
 	roomManager := game.NewGameManager()
 

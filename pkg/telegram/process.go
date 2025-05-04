@@ -72,8 +72,10 @@ func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message)
 		return err
 	}
 
-	_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
-	return err
+	b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
+	b.bot.Send(tgbotapi.NewMessage(b.gm.Rooms[roomID].Room.LeaderID, fmt.Sprintf("Игрок %d подключился к комнате", msg.Chat.ID)))
+
+	return nil
 }
 
 func (b *Bot) processStartGameCommand(ctx context.Context, msg *tgbotapi.Message, nCh chan domain.Notification) error {

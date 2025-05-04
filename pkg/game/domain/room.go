@@ -21,7 +21,7 @@ func NewRoom(id, leaderID int64) *Room {
 	return &Room{
 		ID:        id,
 		LeaderID:  leaderID,
-		MaxRounds: 5, // ToDo: make this configurable
+		MaxRounds: 2, // ToDo: make this configurable
 		Status:    StatusWaiting,
 		Players:   make(map[int64]*Player),
 	}
