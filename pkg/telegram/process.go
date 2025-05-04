@@ -11,18 +11,44 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-const alreadyRegisteredAns = "Вы уже зарегистрированы!"
-const successfullyRegisteredAns = "Вы успешно зарегистрированы!"
-const successfullyCreatedRoomAns = "Комната создана! Ее ID = %d"
+const successfullyRegisteredAns = `
+Привет! 👋
+Добро пожаловать в игру Factory Battle!
 
-const unknownRoomID = "Комнаты с ID=%d не существует :("
-const alreadyInAnotherRoom = "Вы не можете присоединиться к другой комнате. Сейчас вы находитесь в комнате с ID = %d"
-const alreadyInRoom = "Вы уже находитесь в этой комнате!"
-const successfullyJoinedRoomAns = "Теперь вы находитесь в комнате с ID = %d!"
+- Чтобы создать комнату, выполни команду
+/create_room
 
-const gameStartedNotification = "Игра началась! Вы находитесь в комнате с ID = %d.\n\nХод номер 1."
+- Чтобы присоединиться к чужой комнате, выполни команду
+/join_room <номер комнаты>
 
-const unknownCommandAns = "Я не знаю такую команду"
+- Чтобы начать игру, выполни команду
+/start_game
+
+📄 Правила игры
+В каждом раунде игроки должны сделать один из доступных ходов:
+inc - получить 10 очков
+dec - потерять 5 очков
+
+В конце игры победителем становится игрок, набравший наибольшее количество очков
+`
+
+const successfullyCreatedRoomAns = "✅ Комната создана! Ее ID = %d"
+
+const cantJoinRoomAns = "❗️ не удается подключиться к комнате"
+
+const successfullyJoinedRoomAns = `
+✅ Теперь вы находитесь в комнате с ID = %d!
+Когда игра начнется, вам будет отправлено уведомление
+`
+
+const playerEnteredRoomNtf = "👤 Игрок %d подключился к комнате"
+
+const moveAccepted = `
+✏️ Записал ваш ход.
+Ожидание других игроков...
+`
+
+const unknownCommandAns = "🤖 Я не знаю такую команду"
 
 func (b *Bot) processCommand(ctx context.Context, msg *tgbotapi.Message, nCh chan domain.Notification) error {
 	switch msg.Command() {
@@ -68,12 +94,12 @@ func (b *Bot) processJoinRoomCommand(ctx context.Context, msg *tgbotapi.Message)
 	}
 
 	if err = b.gm.AddPlayerToRoom(msg.Chat.ID, roomID); err != nil {
-		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "не удается подключиться к комнате"))
+		_, err = b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, cantJoinRoomAns))
 		return err
 	}
 
 	b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf(successfullyJoinedRoomAns, roomID)))
-	b.bot.Send(tgbotapi.NewMessage(b.gm.Rooms[roomID].Room.LeaderID, fmt.Sprintf("Игрок %d подключился к комнате", msg.Chat.ID)))
+	b.bot.Send(tgbotapi.NewMessage(b.gm.Rooms[roomID].Room.LeaderID, fmt.Sprintf(playerEnteredRoomNtf, msg.Chat.ID)))
 
 	return nil
 }
@@ -103,7 +129,7 @@ func (b *Bot) processMoveCommand(ctx context.Context, msg *tgbotapi.Message) err
 		return nil
 	}
 
-	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "ход записан"))
+	_, err := b.bot.Send(tgbotapi.NewMessage(msg.Chat.ID, moveAccepted))
 	return err
 }
 
